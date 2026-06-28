@@ -7,6 +7,7 @@ import { Card, CardContent } from '../ui/card';
 import EmptyWorkspace from './EmptyWorkspace';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import RepoDialog from './RepoDialog';
 1
 function WorkspaceBody() {
     // const cookieStore = await cookies();
@@ -39,7 +40,8 @@ function WorkspaceBody() {
                     <h2 className="text-lg">Connect Github and Add Repository</h2>
                 </div>
                 <div>
-                    {!token ? <Button onClick={onAddRepo}>Setup</Button> : <Button>+Add Repo</Button>}
+                    {!token ? <Button onClick={onAddRepo}>Setup</Button> :
+                        <RepoDialog setRefreshPage={(refresh: boolean) => console.log(refresh)} />}
                 </div>
             </Card>
             <Card>
