@@ -1,15 +1,31 @@
 "use client"
 import { UserDetailsContext } from '@/context/UserDetailsContext'
-import React, { useContext } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import Image from 'next/image';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import EmptyWorkspace from './EmptyWorkspace';
-
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
+1
 function WorkspaceBody() {
-
+    // const cookieStore = await cookies();
+    // const token = cookieStore.get('gh_token')?.value
     const { userDetail } = useContext(UserDetailsContext);
+    const router = useRouter();
+    const [token, setToken] = useState('');
+    useEffect(() => {
+        getGitHubUserToken();
+    }, []);
 
+    const getGitHubUserToken = async () => {
+        const result = await axios.get('/api/github/token');
+        console.log(result.data.token);
+        setToken(result.data.token);
+    }
+    const onAddRepo = async () => {
+        router.push('/api/github');
+    }
 
     return (
         <div>
@@ -23,7 +39,7 @@ function WorkspaceBody() {
                     <h2 className="text-lg">Connect Github and Add Repository</h2>
                 </div>
                 <div>
-                    <Button>Install</Button>
+                    {!token ? <Button onClick={onAddRepo}>Setup</Button> : <Button>+Add Repo</Button>}
                 </div>
             </Card>
             <Card>
