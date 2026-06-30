@@ -10,9 +10,12 @@ function Provider({ children }: Readonly<{ children: React.ReactNode }>) {
     }, []);
 
     const CreateNewUsers = async () => {
-        const result = await axios.post('/api/users', {});
-        console.log("Result:", result)
-        setUserDetail(result.data.user);
+        try {
+            const result = await axios.post('/api/users', {});
+            setUserDetail(result.data.user);
+        } catch (e) {
+            console.error('Axios error:', e);
+        }
     }
     return (
         <UserDetailsContext.Provider value={{ userDetail, setUserDetail }}>
