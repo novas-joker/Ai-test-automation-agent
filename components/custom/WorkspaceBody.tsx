@@ -7,17 +7,39 @@ import { Card, CardContent } from '../ui/card';
 import EmptyWorkspace from './EmptyWorkspace';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import RepoDialog from './RepoDialog';
-1
+import RepoDialog, { Repo } from './RepoDialog';
+import UserRepoList from './UserRepoList';
+
+export type UserRepo={
+    id:number;
+    repoId:number;
+    name:string;
+    fullName:string;
+    private:string;
+    htmlUrl:string;
+    description:string;
+    userId:number;
+    owner:string;
+    updatedAt?:string;
+    language:string;
+    defaultBranch:string;
+}
+
 function WorkspaceBody() {
     // const cookieStore = await cookies();
     // const token = cookieStore.get('gh_token')?.value
     const { userDetail } = useContext(UserDetailsContext);
     const router = useRouter();
     const [token, setToken] = useState('');
+    const [userRepoList, setUserRepoList] = useState<UserRepo[]>([]);
     useEffect(() => {
         getGitHubUserToken();
     }, []);
+    useEffect(() => {
+        if (userDetail?.id) {
+            GetUserAddedRepoList();
+        }
+    }, [userDetail?.id])
 
     const getGitHubUserToken = async () => {
         const result = await axios.get('/api/github/token');
@@ -26,6 +48,17 @@ function WorkspaceBody() {
     }
     const onAddRepo = async () => {
         router.push('/api/github');
+    }
+    const GetUserAddedRepoList = async () => {
+        try {
+            const result = await axios.get<UserRepo[]>(`/api/userRepo?userId=${userDetail?.id}`);
+            setUserRepoList(Array.isArray(result.data) ? result.data : []);
+            console.log('Fetched repos:', result.data);
+        }
+        catch (e) {
+            console.log("Axios error: ", e)
+            setUserRepoList([]);
+        }
     }
 
     return (
@@ -41,15 +74,16 @@ function WorkspaceBody() {
                 </div>
                 <div>
                     {!token ? <Button onClick={onAddRepo}>Setup</Button> :
-                        <RepoDialog setRefreshPage={(refresh: boolean) => console.log(refresh)} />}
+                        <RepoDialog setRefreshPage={(refresh: boolean) => GetUserAddedRepoList()} />}
                 </div>
             </Card>
-            <Card>
-                <CardContent>
-                    <EmptyWorkspace />
+            {userRepoList.length === 0 ? 
+            <Card className="mt-10">
+                <CardContent> 
+                    <EmptyWorkspace /> 
                 </CardContent>
-            </Card>
-
+            </Card>: 
+            <UserRepoList repoList={userRepoList} />}
         </div>
     )
 }

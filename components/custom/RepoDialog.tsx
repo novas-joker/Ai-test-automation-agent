@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from '../ui/button';
 import axios from 'axios';
 import { UserDetailsContext } from '@/context/UserDetailsContext';
-type Repo = {
+export type Repo = {
     id: number;
     name: string;
     full_name: string;
@@ -37,7 +37,6 @@ function RepoDialog({ setRefreshPage }: { setRefreshPage: (refresh: boolean) => 
     }, []);
     const GetReposList = async () => {
         const result = await axios.get('/api/github/repos');
-        console.log(result.data);
         setRepoList(result.data)
     }
     const filteredRepoList = useMemo(() => {
