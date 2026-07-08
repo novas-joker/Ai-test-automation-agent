@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     //@ts-ignore
     const { repoId, userId, name, fullName, private_, htmlUrl, description, language, owner, default_branch } = await req.json();
     const result = await db.insert(Repositories).values({
-        repoId,
+        repoId: Number(repoId),
         userId,
         name,
         fullName: fullName,

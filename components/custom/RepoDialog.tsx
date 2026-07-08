@@ -67,17 +67,17 @@ function RepoDialog({ setRefreshPage }: { setRefreshPage: (refresh: boolean) => 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
             <DialogTrigger asChild>
-                <Button>+Add repo</Button>
+                <Button>+ Add repository</Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Add Repository</DialogTitle>
+                    <DialogTitle>Add repository</DialogTitle>
                     <DialogDescription>
-                        Search and select one of your github Repository
+                        Search and select one of your GitHub repositories.
                     </DialogDescription>
                 </DialogHeader>
                 <div>
-                    <Input placeholder='Search Repos by Name' onChange={(e) => setSearch(e.target.value)} />
+                    <Input placeholder='Search repositories by name' onChange={(e) => setSearch(e.target.value)} />
                     {/*Repo List*/}
                     <ul className='max-h-60 overflow-y-auto border rounded-2xl mt-4'>
                         {filteredRepoList.map((repo) => (

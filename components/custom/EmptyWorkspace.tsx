@@ -6,9 +6,9 @@ function EmptyWorkspace() {
     return (
         <div className='flex flex-col mt-10 justify-center items-center'>
             <Image src={"/folder.png"} alt="folder" width={70} height={70} />
-            <h2 className="font-medium text-2xl mt-5 mb-4">No Repository Connected</h2>
-            <p className="text-center mx-10">Connect your Github accounts and add a repository to generate and run test cases</p>
-            <Button className={"mt-5"}><Link className="h-4 w-4 mr-2" />Connect Repo</Button>
+            <h2 className="font-medium text-2xl mt-5 mb-4">No repository connected</h2>
+            <p className="text-center mx-10">Connect your GitHub account and add a repository to generate and run test cases.</p>
+            <Button className={"mt-5"}><Link className="h-4 w-4 mr-2" />Connect repository</Button>
         </div>
 
     )
