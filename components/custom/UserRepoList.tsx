@@ -24,12 +24,17 @@ export type TestCase = {
     title: string;
     description: string;
     type: string;
-    repoId: number;
+    repoId: string | number;
     targetFiles:string[];
     expectedResult:string;
     repoName:string;
     repoOwner:string;
     targetRoute:string;
+    status?: string | null;
+    browserbaseScript?: string | null;
+    logs?: string[];
+    sessionId?: string | null;
+    sessionUrl?: string | null;
 }
 type StatusData = {
     totalTests: number;
@@ -52,6 +57,7 @@ function UserRepoList({repoList,setReload}:props) {
     const [loading,setLoading] = useState(false);
     const [testCasesLoading,setTestCasesLoading] = useState(false);
     const [testCases,setTestCases] = useState<TestCase[]>([]);
+    const [errorMessage,setErrorMessage] = useState<string | null>(null);
 
     const handelGenerateTestCases= async(repo: UserRepo)=>{
         setLoading(true);
@@ -82,28 +88,59 @@ function UserRepoList({repoList,setReload}:props) {
             setLoading(false);
         }
     }
-    const getTestCases =async (repoId:number)=>{
-        //get test cases
-        setTestCasesLoading(true);
-        setTestCases([]);
-        const result = await axios.get(`/api/test-cases?repoId=${repoId}`);
-        console.log(result.data);
-        const testCasesForRepo = result.data?.testCases ?? [];
-        setStatusData({
-            totalTests: testCasesForRepo.length,
-            passedTests: 0,
-            failedTests: 0,
-            passRate: 0
+    const getTestCases = async (repoId: number | string | undefined) => {
+        const normalizedRepoId = String(repoId ?? '').trim();
 
-        })
-        setTestCases(testCasesForRepo);
-        setTestCasesLoading(false);
+        if (!normalizedRepoId) {
+            setErrorMessage('Repository ID is missing or invalid.');
+            setTestCases([]);
+            setStatusData({ totalTests: 0, passedTests: 0, failedTests: 0, passRate: 0 });
+            return;
+        }
+
+        setTestCasesLoading(true);
+        setErrorMessage(null);
+        setTestCases([]);
+
+        try {
+            const result = await axios.get('/api/test-cases', {
+                params: { repoId: normalizedRepoId },
+            });
+            const testCasesForRepo = result.data?.testCases ?? [];
+            const passedTests = testCasesForRepo.filter((testCase: TestCase) => testCase.status === 'passed').length;
+            const failedTests = testCasesForRepo.filter((testCase: TestCase) => testCase.status === 'failed').length;
+            const totalTests = testCasesForRepo.length;
+
+            setStatusData({
+                totalTests,
+                passedTests,
+                failedTests,
+                passRate: totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0
+            });
+            setTestCases(testCasesForRepo);
+          
+        } catch (error: any) {
+            const message = error?.response?.data?.error || error?.message || 'Failed to load test cases.';
+            setErrorMessage(message);
+            setTestCases([]);
+            setStatusData({ totalTests: 0, passedTests: 0, failedTests: 0, passRate: 0 });
+        } finally {
+            setTestCasesLoading(false);
+        }
     }
   return (
     <div className="mt-10 gap-10">
      
         <Accordion type="single" collapsible
-        onValueChange={(value)=>getTestCases(Number(value))}>
+        onValueChange={(value)=>{
+            if (!value) {
+                setTestCases([]);
+                setStatusData({ totalTests: 0, passedTests: 0, failedTests: 0, passRate: 0 });
+                setErrorMessage(null);
+                return;
+            }
+            getTestCases(value);
+        }}>
         {repoList.map((repo,index)=>(
 
             <AccordionItem key={repo.repoId} value={(repo.repoId.toString())} 
@@ -122,7 +159,7 @@ function UserRepoList({repoList,setReload}:props) {
                         <div className="bg-gray-950 p-3 border rounded-xl flex justify-between">
                             <div className="flex items-center gap-3">
                                 <Link2Icon className="text-primary"/>
-                                <h2>Target Domain:</h2>
+                                <h2>Target domain:</h2>
                                 <h2 className="bg-black p-1 px-2 border rounded-md text-primary font-medium">{repo.targetDomain}</h2>
                             </div>
                             <RepoSettings repo={repo} setReload={setReload}/>
@@ -136,8 +173,13 @@ function UserRepoList({repoList,setReload}:props) {
                                         <StatusCard title="Pass Rate" value={statusData?.passRate} icon={<TrendingUp className="h-5 w-5 text-slate-700 dark:text-slate-100" />} bgColor="bg-purple-50 dark:bg-purple-950/40" />
                                    
                         </div>
+                        {errorMessage && (
+                            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+                                {errorMessage}
+                            </div>
+                        )}
                         {
-                            !testCasesLoading && testCases.length > 0 && <TestCaseList testCases={testCases} onReload={(repoId:number)=>getTestCases(repoId)}/>
+                            !testCasesLoading && testCases.length > 0 && <TestCaseList testCases={testCases} onReload={(repoId:number|string)=>getTestCases(repoId)} baseUrl={repo.targetDomain ?? ""} />
                         }
                         {
                         testCasesLoading? 
@@ -145,14 +187,14 @@ function UserRepoList({repoList,setReload}:props) {
                             <Loader2Icon className="animate-spin"/> Loading test cases...</h2>: 
                         testCases?.length== 0 && <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-200/80 rounded-xl p-4 bg-slate-50 dark:border-slate-700/80 dark:bg-slate-900/80">
                             <div>
-                                <h3 className="font-medium text-slate-900 dark:text-slate-100">Generate AI Test Cases</h3>
+                                <h3 className="font-medium text-slate-900 dark:text-slate-100">Generate AI test cases</h3>
                                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Analyze this repository and generate automated test cases using AI.</p>
                             </div>
                             <Button className="gap-2"
                                 disabled={loading}
                                 onClick={()=>handelGenerateTestCases(repo)}>
                                 {loading?<Loader2 className="animate-spin"/>:<Sparkles className="h-4 w-4 text-slate-50"/>}
-                                Generate Test Cases
+                                Generate test cases
                             </Button>
                         </div>
                         }

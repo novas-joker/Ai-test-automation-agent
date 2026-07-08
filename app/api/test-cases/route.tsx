@@ -3,20 +3,33 @@ import {db, TestCasesTable} from "@/db";
 import { eq } from 'drizzle-orm';
 
 export async function GET(req: NextRequest) {
+    try {
+        const searchParams = new URL(req.url).searchParams;
+        const repoId = searchParams.get('repoId');
+        const normalizedRepoId = String(repoId?.trim() ?? '');
 
-    const searchParams = new URL(req.url).searchParams;
-    const repoId = searchParams.get('repoId');
+        if (!normalizedRepoId) {
+            return NextResponse.json(
+                {
+                    error: 'Missing required field: repoId',
+                },
+                { status: 400 }
+            );
+        }
 
-    if(!repoId) {
+        const result = await db
+            .select()
+            .from(TestCasesTable)
+            .where(eq(TestCasesTable.repoId, normalizedRepoId));
+
+        return NextResponse.json({ testCases: result });
+    } catch (error: any) {
+        console.error('Failed to load test cases:', error);
         return NextResponse.json(
             {
-                error: "Missing required field: repoId",
+                error: error?.message || 'Failed to load test cases',
             },
-            { status: 400 }
+            { status: 500 }
         );
     }
-
-    const result = await db.select().from(TestCasesTable).where(eq(TestCasesTable.repoId, repoId));
-    return NextResponse.json({ testCases: result });
-
 }

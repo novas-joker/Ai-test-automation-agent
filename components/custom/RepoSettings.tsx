@@ -42,22 +42,22 @@ function RepoSettings({repo,setReload}:props) {
   return (
     <Dialog open={isOpen} onOpenChange={(open)=>setIsOpen(open)}>
         <DialogTrigger asChild>
-            <Button ><Settings2 className="h-4 w-4 mr-1" />Project Config</Button>
+            <Button ><Settings2 className="h-4 w-4 mr-1" />Project settings</Button>
         </DialogTrigger>
         <DialogContent>
             <DialogHeader>
-                <DialogTitle className="flex gap-2 items-center"><Settings2Icon className="text-primary"/>Project/Repo Settings</DialogTitle>
+                <DialogTitle className="flex gap-2 items-center"><Settings2Icon className="text-primary"/>Project and repository settings</DialogTitle>
             <DialogDescription>
-            Configure project-level defaults used during genration of test cases. These settings will be applied to all test cases generated for this repository.
+            Configure project-level defaults used during generation of test cases. These settings will be applied to all test cases generated for this repository.
             </DialogDescription>
     </DialogHeader>
     <div>
         <div className="mt-3">
             <label className="text-gray-500">
-                APP URL/DEFAULT WEBSITE
+                App URL / default website
             </label>
             <Input 
-                placeholder="App url/Domain" 
+                placeholder="App URL / domain" 
                 className="mt-1" 
                 value={repoSettings.targetDomain} 
                 onChange={(e)=>setRepoSettings({...repoSettings,targetDomain:e.target.value})}
@@ -68,7 +68,7 @@ function RepoSettings({repo,setReload}:props) {
         </div>
         <div className="mt-3">
             <label className="text-gray-500">
-                GLOBAL TEST INSTRUCTIONS
+                Global test instructions
             </label>
             <Textarea 
             placeholder="Global test instructions" 
@@ -85,7 +85,7 @@ function RepoSettings({repo,setReload}:props) {
         <Button variant={'outline'}>Cancel</Button>
         
         </DialogClose>
-        <Button onClick={()=>handleSaveSettings()}>Save Config</Button>
+        <Button onClick={()=>handleSaveSettings()}>Save settings</Button>
     </DialogFooter>
   </DialogContent>
 </Dialog>

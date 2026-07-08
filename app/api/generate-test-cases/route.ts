@@ -331,7 +331,7 @@ Important rules:
       .values(
         testCases.map((testCase: any) => ({
           userId,
-          repoId,
+          repoId: repoId ? String(repoId) : null,
           repoName: repoValue,
           repoOwner: ownerValue,
           branch,
