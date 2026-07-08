@@ -7,13 +7,15 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import Image from 'next/image'
-import { CheckCircle2, ListChecks, Loader2, Loader2Icon, Sparkles, TrendingUp, XCircle } from 'lucide-react'
+import { CheckCircle2, Globe2Icon, Link2Icon, ListChecks, Loader2, Loader2Icon, Settings2, Sparkles, TrendingUp, XCircle } from 'lucide-react'
 import { Button } from '../ui/button'
 import axios from 'axios'
 import { UserDetailsContext } from '@/context/UserDetailsContext'
 import TestCaseList from './TestCaseList'
+import RepoSettings from './RepoSettings'
 
 type props={
+    setReload:()=>void;
     repoList:UserRepo[]
 }
 
@@ -36,7 +38,7 @@ type StatusData = {
     passRate: number;
 
 }
-function UserRepoList({repoList}:props) {
+function UserRepoList({repoList,setReload}:props) {
     const [statusData,setStatusData] = useState<StatusData>(
         {
             totalTests: 0,
@@ -86,14 +88,15 @@ function UserRepoList({repoList}:props) {
         setTestCases([]);
         const result = await axios.get(`/api/test-cases?repoId=${repoId}`);
         console.log(result.data);
+        const testCasesForRepo = result.data?.testCases ?? [];
         setStatusData({
-            totalTests:result.data.length,
-            passedTests:0,
-            failedTests:0,
-            passRate:0
+            totalTests: testCasesForRepo.length,
+            passedTests: 0,
+            failedTests: 0,
+            passRate: 0
 
         })
-        setTestCases(result.data.testCases ?? []);
+        setTestCases(testCasesForRepo);
         setTestCasesLoading(false);
     }
   return (
@@ -116,6 +119,15 @@ function UserRepoList({repoList}:props) {
                 </AccordionTrigger>
                 <AccordionContent>
                     <div className="pt-4 space-y-5">
+                        <div className="bg-gray-950 p-3 border rounded-xl flex justify-between">
+                            <div className="flex items-center gap-3">
+                                <Link2Icon className="text-primary"/>
+                                <h2>Target Domain:</h2>
+                                <h2 className="bg-black p-1 px-2 border rounded-md text-primary font-medium">{repo.targetDomain}</h2>
+                            </div>
+                            <RepoSettings repo={repo} setReload={setReload}/>
+                            
+                        </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                            
                                         <StatusCard title="Total Tests" value={statusData?.totalTests} icon={<ListChecks className="h-5 w-5 text-slate-700 dark:text-slate-100" />} bgColor="bg-blue-50 dark:bg-blue-950/40" />

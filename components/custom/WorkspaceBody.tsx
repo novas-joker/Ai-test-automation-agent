@@ -23,6 +23,8 @@ export type UserRepo={
     updatedAt?:string;
     language:string;
     defaultBranch:string;
+    targetDomain?: string;
+    globalInstruction?: string;
 }
 
 function WorkspaceBody() {
@@ -83,7 +85,7 @@ function WorkspaceBody() {
                     <EmptyWorkspace /> 
                 </CardContent>
             </Card>: 
-            <UserRepoList repoList={userRepoList} />}
+            <UserRepoList repoList={userRepoList} setReload={()=>GetUserAddedRepoList()} />}
         </div>
     )
 }

@@ -20,7 +20,8 @@ export const Repositories = pgTable("Repositories", {
   language: text("language").notNull(),
   defaultBranch: text("default_branch").notNull(),
   owner: text("owner").notNull(),
-
+  targetDomain: varchar("target_domain").default("http://localhost:3000/"),
+  globalInstruction:text("global_instruction"),
 });
 
 export const TestCasesTable = pgTable("test_cases", {
