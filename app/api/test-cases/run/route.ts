@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 import { db } from "@/db";
 import { TestCasesTable, Repositories } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { Browserbase } from "@browserbasehq/sdk";
 import { chromium } from "playwright-core";
+import { auth } from "@clerk/nextjs/server";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
@@ -58,6 +59,12 @@ async function readGithubFile({
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId: authUserId } = await auth();
+
+    if (!authUserId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const { testCaseId, baseUrl, mode = "generate", customPrompt = "" } = body;
 
@@ -71,7 +78,12 @@ export async function POST(req: NextRequest) {
     const [testCase] = await db
       .select()
       .from(TestCasesTable)
-      .where(eq(TestCasesTable.id, Number(testCaseId)));
+      .where(
+        and(
+          eq(TestCasesTable.id, Number(testCaseId)),
+          eq(TestCasesTable.userId, authUserId)
+        )
+      );
 
     if (!testCase) {
       return NextResponse.json({ error: "Test case not found" }, { status: 404 });
@@ -194,7 +206,7 @@ export async function POST(req: NextRequest) {
       ].join("\n");
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash",
         contents: promptText,
       });
 
@@ -238,7 +250,6 @@ export async function POST(req: NextRequest) {
 
     let session: any = null;
     let browser: any = null;
-    const dbLog = logs.map((message) => ({ timestamp: new Date().toISOString(), message }));
 
     try {
       const sessionResponse = await bb.sessions.create({
@@ -274,12 +285,13 @@ export async function POST(req: NextRequest) {
       await page.close().catch(() => {});
       await browser.close().catch(() => {});
 
+      const dbLogFinal = logs.map((message) => ({ timestamp: new Date().toISOString(), message }));
       await db
         .update(TestCasesTable)
         .set({
           status: "passed",
           browserbaseScript: scriptText,
-          log: dbLog as any,
+          log: dbLogFinal as any,
         })
         .where(eq(TestCasesTable.id, testCase.id));
 
@@ -299,12 +311,13 @@ export async function POST(req: NextRequest) {
         await browser.close().catch(() => {});
       }
 
+      const dbLogError = logs.map((message) => ({ timestamp: new Date().toISOString(), message }));
       await db
         .update(TestCasesTable)
         .set({
           status: "failed",
           browserbaseScript: scriptText,
-          log: dbLog as any,
+          log: dbLogError as any,
         })
         .where(eq(TestCasesTable.id, testCase.id));
 

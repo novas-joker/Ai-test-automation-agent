@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+
 export async function GET(req: NextRequest) {
     const code = req.nextUrl.searchParams.get('code');
+    const state = req.nextUrl.searchParams.get('state');
+    const cookieStore = await cookies();
+    const savedState = cookieStore.get("github_oauth_state")?.value;
+
+    if (!state || state !== savedState) {
+        return NextResponse.redirect(new URL(`/workspace?error=invalid_state`, req.url))
+    }
+
     if (!code) {
         return NextResponse.redirect(new URL(`/workspace?error=missing_code`, req.url))
     }
@@ -31,9 +41,12 @@ export async function GET(req: NextRequest) {
     response.cookies.set('gh_token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 + 60 * 24 * 30, //30 days
+        maxAge: 60 * 60 * 24 * 30, //30 days
         path: '/',
         sameSite: 'lax'
     });
+
+    // Clear state cookie
+    response.cookies.delete("github_oauth_state");
     return response;
 }
