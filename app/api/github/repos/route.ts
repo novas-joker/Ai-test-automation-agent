@@ -6,7 +6,7 @@ export async function GET() {
     const token = cookieStore.get('gh_token')?.value;
 
     if (!token) {
-        return NextResponse.json(JSON.stringify({ error: 'Github token not found' }), { status: 401 })
+        return NextResponse.json({ error: 'Github token not found' }, { status: 401 })
     }
 
     const allRepo = [];
