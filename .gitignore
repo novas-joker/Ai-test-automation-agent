@@ -41,3 +41,6 @@ __pycache__/
 
 # verification
 /home/jules/verification/
+
+# clerk configuration (can include secrets)
+/.clerk/

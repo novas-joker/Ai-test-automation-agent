@@ -129,109 +129,153 @@ function UserRepoList({repoList,setReload}:props) {
         }
     }
   return (
-    <div className="mt-10 gap-10">
-     
-        <Accordion type="single" collapsible
-        onValueChange={(value)=>{
-            if (!value) {
-                setTestCases([]);
-                setStatusData({ totalTests: 0, passedTests: 0, failedTests: 0, passRate: 0 });
-                setErrorMessage(null);
-                return;
-            }
-            getTestCases(value);
-        }}>
-        {repoList.map((repo,index)=>(
+    <div className="mt-8 space-y-4">
+      <Accordion 
+        type="single" 
+        collapsible
+        onValueChange={(value) => {
+          if (!value) {
+            setTestCases([]);
+            setStatusData({ totalTests: 0, passedTests: 0, failedTests: 0, passRate: 0 });
+            setErrorMessage(null);
+            return;
+          }
+          getTestCases(value);
+        }}
+      >
+        {repoList.map((repo) => (
+          <AccordionItem 
+            key={repo.repoId} 
+            value={repo.repoId.toString()} 
+            className="border border-border bg-card/45 dark:bg-zinc-950/20 p-5 rounded-xl shadow-sm backdrop-blur-sm mb-4 last:mb-0"
+          >
+            <AccordionTrigger className="py-2 hover:no-underline">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 border border-border rounded flex items-center justify-center bg-background shadow-sm">
+                  <Image src="/github.png" alt="github" width={16} height={16} />
+                </div>
+                <div className="flex flex-col items-start gap-0.5">
+                  <h3 className="font-semibold text-sm tracking-tight text-foreground">{repo.fullName}</h3>
+                  <span className="text-xs text-muted-foreground font-mono">{repo.defaultBranch} • {repo.language}</span>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4">
+              <div className="space-y-6">
+                <div className="bg-muted/30 p-3.5 border border-border rounded-xl flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground font-mono">
+                    <Globe2Icon className="h-4 w-4 text-muted-foreground" />
+                    <span>target:</span>
+                    <span className="bg-background border border-border px-2.5 py-0.5 rounded text-foreground text-xs font-semibold">{repo.targetDomain}</span>
+                  </div>
+                  <RepoSettings repo={repo} setReload={setReload} />
+                </div>
 
-            <AccordionItem key={repo.repoId} value={(repo.repoId.toString())} 
-            className="border border-slate-200/80 bg-white/90 dark:border-slate-700/80 dark:bg-slate-950/70 p-5 rounded-xl shadow-sm backdrop-blur-sm">
-                <AccordionTrigger>
-                    <div className="flex items-center gap-2">
-                        <Image src={"/github.png"} alt="github" width={20} height={20} />
-                        <div className="flex flex-col items-start gap-1">
-                            <h2 className="text-slate-900 dark:text-slate-100">{repo.fullName}</h2>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{repo.defaultBranch} • {repo.language}</p>
-                        </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <StatusCard 
+                    title="Total Tests" 
+                    value={statusData?.totalTests} 
+                    icon={<ListChecks className="h-4 w-4 text-muted-foreground" />} 
+                    bgColor="" 
+                  />
+                  <StatusCard 
+                    title="Passed" 
+                    value={statusData?.passedTests} 
+                    icon={<CheckCircle2 className="h-4 w-4 text-emerald-500" />} 
+                    bgColor="" 
+                  />
+                  <StatusCard 
+                    title="Failed" 
+                    value={statusData?.failedTests} 
+                    icon={<XCircle className="h-4 w-4 text-destructive" />} 
+                    bgColor="" 
+                  />
+                  <StatusCard 
+                    title="Pass Rate" 
+                    value={`${statusData?.passRate}%`} 
+                    icon={<TrendingUp className="h-4 w-4 text-indigo-500" />} 
+                    bgColor="" 
+                  />
+                </div>
+
+                {errorMessage && (
+                  <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-xs font-mono text-destructive">
+                    {errorMessage}
+                  </div>
+                )}
+
+                {!testCasesLoading && testCases.length > 0 && (
+                  <TestCaseList 
+                    testCases={testCases} 
+                    onReload={(repoId: number | string) => getTestCases(repoId)} 
+                    baseUrl={repo.targetDomain ?? ""} 
+                  />
+                )}
+
+                {testCasesLoading ? (
+                  <div className="flex items-center justify-center py-6 gap-3 text-sm font-mono text-muted-foreground">
+                    <Loader2Icon className="h-4 w-4 animate-spin text-primary" />
+                    Loading test cases...
+                  </div>
+                ) : (
+                  testCases.length === 0 && (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-border rounded-xl p-5 bg-muted/20">
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-primary" />
+                          Generate AI Test Suite
+                        </h4>
+                        <p className="text-xs text-muted-foreground max-w-lg leading-relaxed">
+                          Run a static analysis of this repository using Gemini to automatically draft E2E testing scenarios for all main routes.
+                        </p>
+                      </div>
+                      <Button 
+                        className="gap-2 shrink-0 font-mono text-xs shadow-sm" 
+                        size="sm"
+                        disabled={loading} 
+                        onClick={() => handelGenerateTestCases(repo)}
+                      >
+                        {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                        Generate Suite
+                      </Button>
                     </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                    <div className="pt-4 space-y-5">
-                        <div className="bg-gray-950 p-3 border rounded-xl flex justify-between">
-                            <div className="flex items-center gap-3">
-                                <Link2Icon className="text-primary"/>
-                                <h2>Target domain:</h2>
-                                <h2 className="bg-black p-1 px-2 border rounded-md text-primary font-medium">{repo.targetDomain}</h2>
-                            </div>
-                            <RepoSettings repo={repo} setReload={setReload}/>
-                            
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                           
-                                        <StatusCard title="Total Tests" value={statusData?.totalTests} icon={<ListChecks className="h-5 w-5 text-slate-700 dark:text-slate-100" />} bgColor="bg-blue-50 dark:bg-blue-950/40" />
-                                        <StatusCard title="Passed" value={statusData?.passedTests} icon={<CheckCircle2 className="h-5 w-5 text-slate-700 dark:text-slate-100" />} bgColor="bg-green-50 dark:bg-green-950/40" />
-                                        <StatusCard title="Failed" value={statusData?.failedTests} icon={<XCircle className="h-5 w-5 text-slate-700 dark:text-slate-100" />} bgColor="bg-red-50 dark:bg-red-950/40" />
-                                        <StatusCard title="Pass Rate" value={statusData?.passRate} icon={<TrendingUp className="h-5 w-5 text-slate-700 dark:text-slate-100" />} bgColor="bg-purple-50 dark:bg-purple-950/40" />
-                                   
-                        </div>
-                        {errorMessage && (
-                            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
-                                {errorMessage}
-                            </div>
-                        )}
-                        {
-                            !testCasesLoading && testCases.length > 0 && <TestCaseList testCases={testCases} onReload={(repoId:number|string)=>getTestCases(repoId)} baseUrl={repo.targetDomain ?? ""} />
-                        }
-                        {
-                        testCasesLoading? 
-                        <h2 className='flex gap-3 items-center'>
-                            <Loader2Icon className="animate-spin"/> Loading test cases...</h2>: 
-                        testCases?.length== 0 && <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-200/80 rounded-xl p-4 bg-slate-50 dark:border-slate-700/80 dark:bg-slate-900/80">
-                            <div>
-                                <h3 className="font-medium text-slate-900 dark:text-slate-100">Generate AI test cases</h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Analyze this repository and generate automated test cases using AI.</p>
-                            </div>
-                            <Button className="gap-2"
-                                disabled={loading}
-                                onClick={()=>handelGenerateTestCases(repo)}>
-                                {loading?<Loader2 className="animate-spin"/>:<Sparkles className="h-4 w-4 text-slate-50"/>}
-                                Generate test cases
-                            </Button>
-                        </div>
-                        }
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-        
-      ))}
+                  )
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
       </Accordion>
     </div>
   )
 }
 
 function StatusCard({
-    title,
-    value,
-    icon,
-    bgColor
-}:{
-    title: string
-    value: string | number
-    icon: React.ReactNode
-    bgColor: string
-}){
-    return (
-        <div className="border border-slate-200/80 rounded-xl p-4 flex items-center justify-between bg-slate-50 text-slate-900 dark:border-slate-700/80 dark:bg-slate-950/80 dark:text-slate-100">
-            <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {title}
-                </p>
-                <h3 className="text-2xl font-semibold mt-1">
-                    {value}
-                </h3>
-            </div>
-            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${bgColor}`}>{icon}</div>
-        </div>
-    )
+  title,
+  value,
+  icon,
+  bgColor
+}: {
+  title: string
+  value: string | number
+  icon: React.ReactNode
+  bgColor: string
+}) {
+  return (
+    <div className="border border-border rounded-xl p-4 flex items-center justify-between bg-card/60 shadow-sm">
+      <div>
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider font-mono">
+          {title}
+        </p>
+        <h3 className="text-2xl font-bold tracking-tight mt-1 text-foreground">
+          {value}
+        </h3>
+      </div>
+      <div className="h-8 w-8 rounded-lg flex items-center justify-center border border-border bg-muted/40 shadow-inner">
+        {icon}
+      </div>
+    </div>
+  )
 }
 
 export default UserRepoList

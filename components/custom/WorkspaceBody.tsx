@@ -64,30 +64,46 @@ function WorkspaceBody() {
     }
 
     return (
-        <div>
-            <div className="flex justify-between items-center">
-                <h2 className='text-4xl font-medium'>Workspace</h2>
-                <h2 className='text-blue-600 bg-blue-100 px-2 rounded-lg'>Remaining credits: {userDetail?.credits}</h2>
-            </div>
-            <Card className={'mt-5 flex justify-between items-center p-4 border rounded-lg'}>
-                <div className={'flex items-center gap-5'}>
-                    <Image src={"/github.png"} alt="github" width={40} height={40} />
-                    <h2 className="text-lg">Connect GitHub and add a repository</h2>
-                </div>
+        <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    {!token ? <Button onClick={onAddRepo}>Connect GitHub</Button> :
-                        <RepoDialog setRefreshPage={(refresh: boolean) => GetUserAddedRepoList()} />}
+                    <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+                    <p className="text-sm text-muted-foreground mt-1">Manage connected repositories and monitor automated test runs.</p>
+                </div>
+                <div className="flex items-center gap-2 border border-border px-3 py-1.5 rounded-full bg-muted/40 text-xs font-mono text-muted-foreground shadow-sm">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                    <span>credits remaining:</span>
+                    <span className="font-semibold text-foreground">{userDetail?.credits ?? 0}</span>
+                </div>
+            </div>
+
+            <Card className="border border-border bg-card/45 backdrop-blur-sm p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 rounded-xl">
+                <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 border border-border rounded-lg flex items-center justify-center bg-background shadow-inner">
+                        <Image src="/github.png" alt="github" width={26} height={26} />
+                    </div>
+                    <div>
+                        <h3 className="text-base font-semibold">Integrate GitHub</h3>
+                        <p className="text-sm text-muted-foreground mt-0.5">Select a repository to scan files and generate E2E test scripts.</p>
+                    </div>
+                </div>
+                <div className="w-full sm:w-auto">
+                    {!token ? (
+                        <Button className="w-full sm:w-auto" onClick={onAddRepo}>Connect GitHub</Button>
+                    ) : (
+                        <RepoDialog setRefreshPage={(refresh: boolean) => GetUserAddedRepoList()} />
+                    )}
                 </div>
             </Card>
-            {userRepoList.length === 0 ? 
-            <Card className="mt-10">
-                <CardContent> 
-                    <EmptyWorkspace /> 
-                </CardContent>
-            </Card>: 
-            <UserRepoList repoList={userRepoList} setReload={()=>GetUserAddedRepoList()} />}
+
+            {userRepoList.length === 0 ? (
+                <EmptyWorkspace />
+            ) : (
+                <UserRepoList repoList={userRepoList} setReload={() => GetUserAddedRepoList()} />
+            )}
         </div>
     )
+
 }
 
 export default WorkspaceBody

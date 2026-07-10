@@ -1,17 +1,18 @@
 import React from 'react'
-import Image from 'next/image'
-import { Button } from '../ui/button'
-import { Link } from 'lucide-react'
+import { FolderOpenIcon } from 'lucide-react'
+
 function EmptyWorkspace() {
     return (
-        <div className='flex flex-col mt-10 justify-center items-center'>
-            <Image src={"/folder.png"} alt="folder" width={70} height={70} />
-            <h2 className="font-medium text-2xl mt-5 mb-4">No repository connected</h2>
-            <p className="text-center mx-10">Connect your GitHub account and add a repository to generate and run test cases.</p>
-            <Button className={"mt-5"}><Link className="h-4 w-4 mr-2" />Connect repository</Button>
+        <div className="flex flex-col items-center justify-center text-center p-12 border border-dashed border-border rounded-xl bg-card/30 mt-6 min-h-[300px]">
+            <div className="h-12 w-12 border border-border rounded-full flex items-center justify-center bg-muted/40 mb-4 text-muted-foreground">
+                <FolderOpenIcon className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-semibold tracking-tight">No repositories connected</h3>
+            <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto leading-relaxed">
+                Connect your GitHub account using the button above and select a repository to get started with AI test generation.
+            </p>
         </div>
-
     )
 }
 
-export default EmptyWorkspace
+export default EmptyWorkspace;
