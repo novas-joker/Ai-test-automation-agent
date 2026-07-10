@@ -88,7 +88,7 @@ function TestCaseList ({testCases,onReload,baseUrl}:Props) {
                         {testCase?.status=="failed" && (
                             <Badge variant={'destructive'} className="text-red-200 font-normal">{testCase.status}</Badge>
                         )}
-                        {testCase?.status=="failed" && (
+                        {testCase?.status=="passed" && (
                             <Badge variant={'default'} className="text-green-200 font-normal">{testCase.status}</Badge>
                         )}
                         {testCase?.status=="running" && (

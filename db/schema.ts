@@ -1,7 +1,7 @@
 import { integer, pgTable, serial, text, timestamp, varchar, jsonb } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: varchar("id", { length: 255 }).primaryKey(),
   name: text("name"),
   email: text("email").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -10,7 +10,7 @@ export const users = pgTable("users", {
 
 export const Repositories = pgTable("Repositories", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  userId: varchar("user_id", { length: 255 }).references(() => users.id).notNull(),
   repoId: integer("repo_id").notNull(),
   name: text("name").notNull(),
   fullName: text("full_name").notNull(),
