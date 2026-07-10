@@ -25,6 +25,7 @@ export type UserRepo={
     defaultBranch:string;
     targetDomain?: string|undefined;
     globalInstruction?: string;
+    githubUsername?: string;
 }
 
 function WorkspaceBody() {
@@ -43,13 +44,26 @@ function WorkspaceBody() {
         }
     }, [userDetail?.id])
 
+    // Listen for GitHub disconnect event
+    useEffect(() => {
+        const handleGitHubDisconnect = () => {
+            setToken('');
+            setUserRepoList([]);
+        };
+
+        window.addEventListener('github-disconnected', handleGitHubDisconnect);
+        return () => {
+            window.removeEventListener('github-disconnected', handleGitHubDisconnect);
+        };
+    }, []);
+
     const getGitHubUserToken = async () => {
         const result = await axios.get('/api/github/token');
         console.log(result.data.token);
         setToken(result.data.token);
     }
     const onAddRepo = async () => {
-        router.push('/api/github');
+        window.location.href = '/api/github';
     }
     const GetUserAddedRepoList = async () => {
         try {

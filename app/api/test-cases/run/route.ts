@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
 
     if (forceRegenerate) {
       const cookiesStore = await cookies();
-      const githubToken = cookiesStore.get("gh_token")?.value;
+      const githubToken = cookiesStore.get(`gh_token_${authUserId}`)?.value;
 
       if (!githubToken) {
         return NextResponse.json(

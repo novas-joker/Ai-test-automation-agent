@@ -2,12 +2,30 @@
 import { UserDetailsContext } from '@/context/UserDetailsContext';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
+import { useUser } from '@clerk/nextjs';
 
 function Provider({ children }: Readonly<{ children: React.ReactNode }>) {
+    const { user, isLoaded } = useUser();
     const [userDetail, setUserDetail] = useState<any>();
+    
+    // Only create user when user is signed in
     useEffect(() => {
-        CreateNewUsers();
-    }, []);
+        if (isLoaded && user) {
+            CreateNewUsers();
+        }
+    }, [user, isLoaded]);
+
+    // Listen for user changes (sign out / sign in)
+    useEffect(() => {
+        if (isLoaded && user) {
+            // User is logged in, ensure GitHub status is refreshed
+            window.dispatchEvent(new Event('user-changed'));
+        } else if (isLoaded && !user) {
+            // User signed out, trigger cleanup
+            window.dispatchEvent(new Event('user-signed-out'));
+            setUserDetail(null);
+        }
+    }, [user, isLoaded]);
 
     const CreateNewUsers = async () => {
         try {
