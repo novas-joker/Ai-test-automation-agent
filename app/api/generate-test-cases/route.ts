@@ -139,16 +139,15 @@ async function readGithubFile({
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as {
-      userId?: number;
+      userId?: string | number;
       repoId?: number;
       owner?: string;
       repo?: string;
       branch?: string;
     };
-    const cookieStore = await cookies();
-    const githubToken = cookieStore.get('gh_token')?.value ?? "";
-
     const { userId, repoId, owner, repo } = body;
+    const cookieStore = await cookies();
+    const githubToken = cookieStore.get(`gh_token_${userId}`)?.value ?? "";
     const branch = body.branch ?? "main";
 
     const missingFields = [];

@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     }
 
     const cookiStore = await cookies();
-    const token = cookiStore.get('gh_token')?.value
+    const token = cookiStore.get(`gh_token_${userId}`)?.value
 
     return NextResponse.json({ token: token })
 }

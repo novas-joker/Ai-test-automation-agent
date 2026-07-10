@@ -2,6 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
+import { GitHubStatus } from './GitHubStatus';
 
 function WorkspaceHeader() {
     return (
@@ -25,6 +26,7 @@ function WorkspaceHeader() {
                 </nav>
 
                 <div className="flex items-center gap-4">
+                    <GitHubStatus />
                     <UserButton afterSignOutUrl="/" />
                 </div>
             </div>
@@ -32,4 +34,4 @@ function WorkspaceHeader() {
     );
 }
 
-export default WorkspaceHeader;
+export default WorkspaceHeader;

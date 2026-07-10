@@ -24,6 +24,7 @@ export type Repo = {
     language: string;
     default_branch: string;
     owner: string;
+    githubUsername: string;
 }
 
 function RepoDialog({ setRefreshPage }: { setRefreshPage: (refresh: boolean) => void }) {
@@ -59,6 +60,7 @@ function RepoDialog({ setRefreshPage }: { setRefreshPage: (refresh: boolean) => 
             owner: selectedRepo.owner,
             userId: userDetail?.id,
             default_branch: selectedRepo.default_branch,
+            githubUsername: selectedRepo.githubUsername
         })
         console.log(result.data);
         setIsOpen(false);

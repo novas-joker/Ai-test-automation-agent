@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { auth } from "@clerk/nextjs/server";
 
 export async function GET(req: NextRequest) {
+    const { userId } = await auth();
+    if (!userId) {
+        return NextResponse.redirect(new URL("/sign-in", req.url));
+    }
+
     const code = req.nextUrl.searchParams.get('code');
     const state = req.nextUrl.searchParams.get('state');
     const cookieStore = await cookies();
-    const savedState = cookieStore.get("github_oauth_state")?.value;
+    const savedState = cookieStore.get(`github_oauth_state_${userId}`)?.value;
 
     if (!state || state !== savedState) {
         return NextResponse.redirect(new URL(`/workspace?error=invalid_state`, req.url))
@@ -38,7 +44,7 @@ export async function GET(req: NextRequest) {
     const response = NextResponse.redirect(new URL('/workspace', req.url))
 
     //store token in http-only cookie
-    response.cookies.set('gh_token', token, {
+    response.cookies.set(`gh_token_${userId}`, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24 * 30, //30 days
@@ -47,6 +53,6 @@ export async function GET(req: NextRequest) {
     });
 
     // Clear state cookie
-    response.cookies.delete("github_oauth_state");
+    response.cookies.delete(`github_oauth_state_${userId}`);
     return response;
 }

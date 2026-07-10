@@ -10,6 +10,7 @@ export const users = pgTable("users", {
 
 export const Repositories = pgTable("Repositories", {
   id: serial("id").primaryKey(),
+  githubUsername: varchar("github_username", { length: 255 }),
   userId: varchar("user_id", { length: 255 }).references(() => users.id).notNull(),
   repoId: integer("repo_id").notNull(),
   name: text("name").notNull(),
