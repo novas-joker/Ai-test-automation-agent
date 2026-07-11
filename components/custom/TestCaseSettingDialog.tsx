@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from '../ui/button'
-import { SettingsIcon } from 'lucide-react'
+import { Loader2, SettingsIcon } from 'lucide-react'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
 import { TestCase } from './UserRepoList'
@@ -22,6 +22,8 @@ type props={
 }
 
 function TestCaseSettingDialog({testCase,setReload}:props) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [formTestCase,setFormTestCase]=useState(
         {
             title:testCase?.title||'',
@@ -45,19 +47,27 @@ function TestCaseSettingDialog({testCase,setReload}:props) {
     };
 
     const updateCase=async ()=>{
-        const result = await axios.post('/api/test-cases/settings', {
-            ...formTestCase,
-            testCaseId: testCase?.id
-        });
-        console.log(result?.data);
-        setReload();
+        setLoading(true);
+        try {
+            const result = await axios.post('/api/test-cases/settings', {
+                ...formTestCase,
+                testCaseId: testCase?.id
+            });
+            console.log(result?.data);
+            setReload(testCase?.repoId);
+            setIsOpen(false);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
     <div>
-        <Dialog>
+        <Dialog open={isOpen} onOpenChange={(open) => !loading && setIsOpen(open)}>
             <DialogTrigger asChild>
-                <Button size={'icon'} variant={"outline"} type="button">
+                <Button size={'icon'} variant={"outline"} type="button" onClick={() => setIsOpen(true)}>
                     <SettingsIcon className="h-4 w-4" />
                 </Button>
             </DialogTrigger>
@@ -88,11 +98,14 @@ function TestCaseSettingDialog({testCase,setReload}:props) {
                 </div>
                 <DialogFooter>
                     <DialogClose asChild>
-                       <Button variant={'outline'}>
+                       <Button variant={'outline'} disabled={loading}>
                         Cancel
-                        </Button>
+                       </Button>
                     </DialogClose>
-                    <Button onClick={updateCase}>Update Case</Button>
+                    <Button onClick={updateCase} disabled={loading} className="gap-2">
+                        {loading && <Loader2 className="h-3 w-3 animate-spin" />}
+                        Update Case
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

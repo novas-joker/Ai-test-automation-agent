@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     Dialog,
     DialogContent,
@@ -62,6 +62,8 @@ export default function TestExecutionModal({ isOpen, onClose, testCases, reposit
     const [executionMode, setExecutionMode] = useState<"cache" | "generate">("cache");
     const [customPrompt, setCustomPrompt] = useState("");
     const [showOptions, setShowOptions] = useState(false);
+
+    const activeAbortControllerRef = useRef<AbortController | null>(null);
 
     // Initialize states when testCases change or modal opens
     useEffect(() => {
@@ -127,6 +129,9 @@ export default function TestExecutionModal({ isOpen, onClose, testCases, reposit
                 },
             }));
 
+            const controller = new AbortController();
+            activeAbortControllerRef.current = controller;
+
             try {
                 // Call run API with advanced flags
                 const res = await axios.post("/api/test-cases/run", {
@@ -134,6 +139,8 @@ export default function TestExecutionModal({ isOpen, onClose, testCases, reposit
                     baseUrl: baseUrl.trim(),
                     mode: executionMode, // "cache" (direct run) or "generate" (regenerate)
                     customPrompt: customPrompt.trim(),
+                }, {
+                    signal: controller.signal,
                 });
 
                 const data = res.data;
@@ -150,7 +157,22 @@ export default function TestExecutionModal({ isOpen, onClose, testCases, reposit
                         error: data.error,
                     },
                 }));
+                
+                // Move to next item in the queue
+                setCurrentIdx((prev) => prev + 1);
             } catch (err: any) {
+                if (axios.isCancel(err)) {
+                    console.log("Request cancelled by client");
+                    setResults((prev) => ({
+                        ...prev,
+                        [tcId]: {
+                            ...prev[tcId],
+                            status: "idle",
+                            logs: [...(prev[tcId]?.logs || []), `[SYSTEM] Execution cancelled by user.`],
+                        },
+                    }));
+                    return;
+                }
                 const errMsg = err.response?.data?.error || err.message || "Execution failed";
                 setResults((prev) => ({
                     ...prev,
@@ -161,10 +183,14 @@ export default function TestExecutionModal({ isOpen, onClose, testCases, reposit
                         logs: [...(prev[tcId]?.logs || []), `[SYSTEM ERROR] ${errMsg}`],
                     },
                 }));
+                
+                // Move to next item in the queue
+                setCurrentIdx((prev) => prev + 1);
+            } finally {
+                if (activeAbortControllerRef.current === controller) {
+                    activeAbortControllerRef.current = null;
+                }
             }
-
-            // Move to next item in the queue
-            setCurrentIdx((prev) => prev + 1);
         };
 
         runTest();
@@ -196,7 +222,18 @@ export default function TestExecutionModal({ isOpen, onClose, testCases, reposit
     const stopExecution = () => {
         setIsExecuting(false);
         setCurrentIdx(-1);
+        if (activeAbortControllerRef.current) {
+            activeAbortControllerRef.current.abort();
+            activeAbortControllerRef.current = null;
+        }
     };
+
+    // Automatically stop execution if modal is closed
+    useEffect(() => {
+        if (!isOpen) {
+            stopExecution();
+        }
+    }, [isOpen]);
 
     const currentSelectedResult = selectedDetailId ? results[selectedDetailId] : null;
     const currentSelectedTestCase = testCases.find((tc) => tc.id === selectedDetailId);
@@ -444,7 +481,7 @@ export default function TestExecutionModal({ isOpen, onClose, testCases, reposit
 
                 {/* Footer Controls */}
                 <div className="border-t pt-4 flex justify-end gap-3 shrink-0">
-                    <Button variant="outline" onClick={onClose} disabled={isExecuting} className="h-10 font-medium px-5">
+                    <Button variant="outline" onClick={onClose} className="h-10 font-medium px-5">
                         Close & Refresh Status
                     </Button>
                 </div>

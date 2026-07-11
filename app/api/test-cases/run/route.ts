@@ -251,6 +251,19 @@ export async function POST(req: NextRequest) {
     let session: any = null;
     let browser: any = null;
 
+    const abortHandler = async () => {
+      console.log("Client aborted request, closing CDP connection");
+      if (browser) {
+        try {
+          await browser.close();
+        } catch (e) {
+          console.error("Error closing browser on abort:", e);
+        }
+      }
+    };
+
+    req.signal.addEventListener("abort", abortHandler);
+
     try {
       const sessionResponse = await bb.sessions.create({
         projectId: process.env.BROWSERBASE_PROJECT_ID,
@@ -305,7 +318,9 @@ export async function POST(req: NextRequest) {
       });
     } catch (execError: any) {
       console.error("Script execution error:", execError);
-      logs.push(`[SYSTEM ERROR] Script execution failed: ${execError.message || String(execError)}`);
+      const isAborted = req.signal.aborted;
+      const displayError = isAborted ? "Execution cancelled by user" : (execError.message || String(execError));
+      logs.push(`[SYSTEM ERROR] Script execution failed: ${displayError}`);
 
       if (browser) {
         await browser.close().catch(() => {});
@@ -324,12 +339,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: false,
         status: "failed",
-        error: execError.message || String(execError),
+        error: displayError,
         sessionId: session?.id,
         sessionUrl: session ? `https://www.browserbase.com/sessions/${session.id}` : null,
         logs,
         browserbaseScript: scriptText,
       });
+    } finally {
+      req.signal.removeEventListener("abort", abortHandler);
     }
   } catch (error: any) {
     console.error("API endpoint error:", error);

@@ -54,16 +54,17 @@ function UserRepoList({repoList,setReload}:props) {
     )
   
     const {userDetail}=useContext(UserDetailsContext);
-    const [loading,setLoading] = useState(false);
+    const [generatingRepoId, setGeneratingRepoId] = useState<string | number | null>(null);
     const [testCasesLoading,setTestCasesLoading] = useState(false);
     const [testCases,setTestCases] = useState<TestCase[]>([]);
     const [errorMessage,setErrorMessage] = useState<string | null>(null);
 
     const handelGenerateTestCases= async(repo: UserRepo)=>{
-        setLoading(true);
+        const repoId = repo?.repoId ?? repo?.id;
+        setGeneratingRepoId(repoId);
         const payload = {
             userId: userDetail?.id,
-            repoId: repo?.repoId ?? repo?.id,
+            repoId: repoId,
             owner: repo.owner,
             repo: repo.name ?? repo.fullName,
             branch: repo.defaultBranch ?? (repo as any).default_branch ?? "main",
@@ -71,13 +72,14 @@ function UserRepoList({repoList,setReload}:props) {
         console.log('Generate test cases payload:', payload);
         if (!payload.userId) {
             console.error('Generate test cases failed: missing userId');
-            setLoading(false);
+            setGeneratingRepoId(null);
             return;
         }
 
         try {
             const result = await axios.post('/api/generate-test-cases', payload);
             console.log(result.data);
+            await getTestCases(repoId);
         } catch (error: any) {
             if (error.response?.data) {
                 console.error('Generate test cases API error:', error.response.data);
@@ -85,7 +87,7 @@ function UserRepoList({repoList,setReload}:props) {
                 console.error('Generate test cases request failed:', error);
             }
         } finally {
-            setLoading(false);
+            setGeneratingRepoId(null);
         }
     }
     const getTestCases = async (repoId: number | string | undefined) => {
@@ -204,41 +206,42 @@ function UserRepoList({repoList,setReload}:props) {
                   </div>
                 )}
 
-                {!testCasesLoading && testCases.length > 0 && (
-                  <TestCaseList 
-                    testCases={testCases} 
-                    onReload={(repoId: number | string) => getTestCases(repoId)} 
-                    baseUrl={repo.targetDomain ?? ""} 
-                  />
-                )}
-
-                {testCasesLoading ? (
+                {testCasesLoading && testCases.length === 0 ? (
                   <div className="flex items-center justify-center py-6 gap-3 text-sm font-mono text-muted-foreground">
                     <Loader2Icon className="h-4 w-4 animate-spin text-primary" />
                     Loading test cases...
                   </div>
                 ) : (
-                  testCases.length === 0 && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-border rounded-xl p-5 bg-muted/20">
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
-                          <Sparkles className="h-4 w-4 text-primary" />
-                          Generate AI Test Suite
-                        </h4>
-                        <p className="text-xs text-muted-foreground max-w-lg leading-relaxed">
-                          Run a static analysis of this repository using Gemini to automatically draft E2E testing scenarios for all main routes.
-                        </p>
+                  testCases.length > 0 ? (
+                    <TestCaseList 
+                      testCases={testCases} 
+                      onReload={(repoId: number | string) => getTestCases(repoId)} 
+                      baseUrl={repo.targetDomain ?? ""} 
+                      isLoading={testCasesLoading}
+                    />
+                  ) : (
+                    !testCasesLoading && (
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-border rounded-xl p-5 bg-muted/20">
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                            Generate AI Test Suite
+                          </h4>
+                          <p className="text-xs text-muted-foreground max-w-lg leading-relaxed">
+                            Run a static analysis of this repository using Gemini to automatically draft E2E testing scenarios for all main routes.
+                          </p>
+                        </div>
+                        <Button 
+                          className="gap-2 shrink-0 font-mono text-xs shadow-sm" 
+                          size="sm"
+                          disabled={generatingRepoId !== null} 
+                          onClick={() => handelGenerateTestCases(repo)}
+                        >
+                          {generatingRepoId === repo.repoId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                          Generate Suite
+                        </Button>
                       </div>
-                      <Button 
-                        className="gap-2 shrink-0 font-mono text-xs shadow-sm" 
-                        size="sm"
-                        disabled={loading} 
-                        onClick={() => handelGenerateTestCases(repo)}
-                      >
-                        {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                        Generate Suite
-                      </Button>
-                    </div>
+                    )
                   )
                 )}
               </div>

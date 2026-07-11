@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from '../ui/button';
+import { Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { UserDetailsContext } from '@/context/UserDetailsContext';
 export type Repo = {
@@ -33,6 +34,7 @@ function RepoDialog({ setRefreshPage }: { setRefreshPage: (refresh: boolean) => 
     const [search, setSearch] = useState('');
     const { userDetail } = useContext(UserDetailsContext);
     const [isOpen, setIsOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
     useEffect(() => {
         GetReposList();
     }, []);
@@ -48,23 +50,30 @@ function RepoDialog({ setRefreshPage }: { setRefreshPage: (refresh: boolean) => 
 
     const saveRepoToDb = async () => {
         if (!selectedRepo) return;
-        const result = await axios.post('/api/userRepo', {
-            repoId: selectedRepo.id,
-            name: selectedRepo.name,
-            fullName: selectedRepo.full_name,
-            private_: selectedRepo.private_,
-            htmlUrl: selectedRepo.html_url,
-            description: selectedRepo.description,
-            updatedAt: selectedRepo.updated_at,
-            language: selectedRepo.language,
-            owner: selectedRepo.owner,
-            userId: userDetail?.id,
-            default_branch: selectedRepo.default_branch,
-            githubUsername: selectedRepo.githubUsername
-        })
-        console.log(result.data);
-        setIsOpen(false);
-        setRefreshPage(true);
+        setLoading(true);
+        try {
+            const result = await axios.post('/api/userRepo', {
+                repoId: selectedRepo.id,
+                name: selectedRepo.name,
+                fullName: selectedRepo.full_name,
+                private_: selectedRepo.private_,
+                htmlUrl: selectedRepo.html_url,
+                description: selectedRepo.description,
+                updatedAt: selectedRepo.updated_at,
+                language: selectedRepo.language,
+                owner: selectedRepo.owner,
+                userId: userDetail?.id,
+                default_branch: selectedRepo.default_branch,
+                githubUsername: selectedRepo.githubUsername
+            })
+            console.log(result.data);
+            setIsOpen(false);
+            setRefreshPage(true);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
     }
     return (
         <Dialog open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
@@ -93,8 +102,13 @@ function RepoDialog({ setRefreshPage }: { setRefreshPage: (refresh: boolean) => 
                     </ul>
                 </div>
                 <DialogFooter className="flex gap-5">
-                    <DialogClose>Cancel</DialogClose>
-                    <Button onClick={() => saveRepoToDb()}>Add</Button>
+                    <DialogClose asChild>
+                        <Button variant="outline" disabled={loading}>Cancel</Button>
+                    </DialogClose>
+                    <Button onClick={() => saveRepoToDb()} disabled={loading || !selectedRepo} className="gap-2">
+                        {loading && <Loader2 className="h-3 w-3 animate-spin" />}
+                        Add
+                    </Button>
                 </DialogFooter>
             </DialogContent>
 
