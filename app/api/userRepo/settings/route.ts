@@ -12,11 +12,7 @@ export async function POST(req:NextRequest){
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const {repoId,userId,targetDomain,globalInstruction}=await req.json();
-
-        if (userId !== authUserId) {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-        }
+        const {repoId,targetDomain,globalInstruction}=await req.json();
 
         const result = await db.update(Repositories).set({
             targetDomain:targetDomain,

@@ -2,15 +2,17 @@ import React, { useState } from 'react'
 import { TestCase } from './UserRepoList'
 import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
-import { Play, RefreshCw } from 'lucide-react';
+import { Play, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import TestCaseSettingDialog from './TestCaseSettingDialog';
 import TestExecutionModal from './TestCaseExecutionModal';
+import { cn } from '@/lib/utils';
 
 type Props = {
     testCases: TestCase[];
     onReload: (repoId: string | number) => void;
     baseUrl?: string;
+    isLoading?: boolean;
 }
 
 const normalizeBaseUrl = (value: string) => {
@@ -32,7 +34,7 @@ const normalizeBaseUrl = (value: string) => {
     }
 };
 
-function TestCaseList ({testCases,onReload,baseUrl}:Props) {
+function TestCaseList ({testCases,onReload,baseUrl,isLoading = false}:Props) {
     const [selectedTestCases,setSelectedTestCases]=useState<TestCase[]>([]);
     const [isRunningSelected,setIsRunningSelected]=useState(false);
     const [runError,setRunError]=useState<string | null>(null);
@@ -68,7 +70,16 @@ function TestCaseList ({testCases,onReload,baseUrl}:Props) {
     <div>
         <div className="flex items-center justify-between">
             <h2 className="font-medium text-primary">Generated Test Cases</h2>
-            <Button size={'sm'} onClick={()=>onReload(testCases[0]?.repoId)}><RefreshCw className="h-3 w-3 mr-1"/>Refresh</Button>
+            <Button 
+                size={'sm'} 
+                variant="outline"
+                disabled={isLoading} 
+                onClick={()=>onReload(testCases[0]?.repoId)}
+                className="gap-2"
+            >
+                <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
+                {isLoading ? "Refreshing..." : "Refresh"}
+            </Button>
         </div>
         <div className="border rounded-md mt-3">
             {testCases.map((testCase, index) => (
@@ -104,9 +115,17 @@ function TestCaseList ({testCases,onReload,baseUrl}:Props) {
                     <h2>Run selected test cases</h2>
                     {runError && <p className="text-xs text-red-600 mt-1">{runError}</p>}
                 </div>
-                <Button disabled={selectedTestCases?.length===0 || isRunningSelected} onClick={handleRunSelected}>
-                    {isRunningSelected ? 'Running...' : <><Play className="h-4 w-4 mr-3"/> Run selected</>}
-                </Button>
+                 <Button 
+                     disabled={selectedTestCases?.length===0 || isRunningSelected} 
+                     onClick={handleRunSelected}
+                     className="gap-2"
+                 >
+                     {isRunningSelected ? (
+                         <><Loader2 className="h-4 w-4 animate-spin"/> Running...</>
+                     ) : (
+                         <><Play className="h-4 w-4 fill-current"/> Run selected</>
+                     )}
+                 </Button>
             </div>
         </div>
 
@@ -115,6 +134,9 @@ function TestCaseList ({testCases,onReload,baseUrl}:Props) {
             onClose={() => {
                 setIsExecutionModalOpen(false);
                 setIsRunningSelected(false);
+                if (testCases[0]?.repoId) {
+                    onReload(testCases[0].repoId);
+                }
             }}
             testCases={selectedTestCases}
             repository={{ targetDomain: baseUrl ?? "" }}

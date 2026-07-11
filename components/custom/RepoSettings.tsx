@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from '../ui/button'
-import { Settings2, Settings2Icon } from 'lucide-react'
+import { Loader2, Settings2, Settings2Icon } from 'lucide-react'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
 import { DialogClose } from '@radix-ui/react-dialog'
@@ -27,16 +27,24 @@ function RepoSettings({repo,setReload}:props) {
     });
 
     const [ isOpen,setIsOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const handleSaveSettings =async() => {
-        const result = await axios.post('/api/userRepo/settings', {
-            repoId: repo?.repoId,
-            targetDomain: repoSettings.targetDomain,
-            globalInstruction: repoSettings.globalInstruction
-        });
-        console.log(result?.data);
-        setReload();
-        setIsOpen(false);
+        setLoading(true);
+        try {
+            const result = await axios.post('/api/userRepo/settings', {
+                repoId: repo?.repoId,
+                targetDomain: repoSettings.targetDomain,
+                globalInstruction: repoSettings.globalInstruction
+            });
+            console.log(result?.data);
+            setReload();
+            setIsOpen(false);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
     }
 
   return (
@@ -82,10 +90,12 @@ function RepoSettings({repo,setReload}:props) {
     </div>
     <DialogFooter>
         <DialogClose asChild >
-        <Button variant={'outline'}>Cancel</Button>
-        
+        <Button variant={'outline'} disabled={loading}>Cancel</Button>
         </DialogClose>
-        <Button onClick={()=>handleSaveSettings()}>Save settings</Button>
+        <Button onClick={()=>handleSaveSettings()} disabled={loading} className="gap-2">
+            {loading && <Loader2 className="h-3 w-3 animate-spin" />}
+            Save settings
+        </Button>
     </DialogFooter>
   </DialogContent>
 </Dialog>
