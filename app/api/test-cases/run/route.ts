@@ -252,7 +252,7 @@ export async function POST(req: NextRequest) {
     let browser: any = null;
 
     const abortHandler = async () => {
-      console.log("Client aborted request, closing CDP connection");
+      console.warn("Client aborted request, closing CDP connection");
       if (browser) {
         try {
           await browser.close();

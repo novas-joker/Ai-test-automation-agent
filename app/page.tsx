@@ -52,7 +52,7 @@ export default function LandingPage() {
               <a
                 href="https://github.com"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="nav-link"
               >
                 GitHub
@@ -211,7 +211,7 @@ export default function LandingPage() {
               <a
                 href="https://github.com"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="nav-link"
               >
                 GitHub

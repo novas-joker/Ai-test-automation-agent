@@ -408,7 +408,7 @@ export default function TestExecutionModal({ isOpen, onClose, testCases, reposit
                                     </div>
                                     {currentSelectedResult?.sessionUrl && (
                                         <Button
-                                            onClick={() => window.open(currentSelectedResult.sessionUrl, "_blank")}
+                                            onClick={() => window.open(currentSelectedResult.sessionUrl, "_blank", "noopener,noreferrer")}
                                             variant="outline"
                                             size="sm"
                                             className="font-medium text-xs gap-1 border-primary/30 text-primary hover:bg-primary/5 shadow-xs shrink-0"
