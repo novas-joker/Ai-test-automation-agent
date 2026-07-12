@@ -1,94 +1,14 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
 
-interface BackgroundDot {
-  id: number;
-  x: number;
-  y: number;
-  scale: number;
-}
-
-export default function Home() {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [backgroundDots, setBackgroundDots] = useState<BackgroundDot[]>([]);
-  const dotsRef = useRef<BackgroundDot[]>([]);
-  const idRef = useRef(0);
-
-  useEffect(() => {
-    // Enable smooth scroll behavior
-    document.documentElement.style.scrollBehavior = 'smooth';
-
-    // Generate background dots
-    const generateBackgroundDots = () => {
-      const dots: BackgroundDot[] = [];
-      for (let i = 0; i < 50; i++) {
-        dots.push({
-          id: i,
-          x: Math.random() * window.innerWidth,
-          y: Math.random() * window.innerHeight,
-          scale: 1,
-        });
-      }
-      dotsRef.current = dots;
-      setBackgroundDots([...dots]);
-    };
-
-    generateBackgroundDots();
-
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
-
-      // Update dot scales based on distance from cursor
-      const updatedDots = dotsRef.current.map((dot) => {
-        const dx = dot.x - e.clientX;
-        const dy = dot.y - e.clientY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const maxDistance = 150;
-
-        // Scale dots based on proximity
-        let scale = 1;
-        if (distance < maxDistance) {
-          scale = 1 + (1 - distance / maxDistance) * 2; // Scale up to 3x
-        }
-
-        return { ...dot, scale };
-      });
-
-      dotsRef.current = updatedDots;
-      setBackgroundDots([...updatedDots]);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
-
+export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-hidden">
-      {/* Interactive background dots */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        {backgroundDots.map((dot) => (
-          <div
-            key={dot.id}
-            className="absolute rounded-full"
-            style={{
-              left: `${dot.x}px`,
-              top: `${dot.y}px`,
-              width: '4px',
-              height: '4px',
-              transform: `translate(-50%, -50%) scale(${dot.scale})`,
-              backgroundColor: 'hsl(var(--primary) / 0.5)',
-              boxShadow: `0 0 ${8 * dot.scale}px hsla(var(--primary), 0.6)`,
-              transition: 'all 0.3s ease-out',
-            }}
-          />
-        ))}
-      </div>
-
       <style jsx>{`
         .nav-link {
           position: relative;
