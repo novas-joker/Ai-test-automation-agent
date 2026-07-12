@@ -27,5 +27,7 @@ export async function GET(req: Request) {
         state: state,
         prompt: "select_account", // Force GitHub to show account picker even if user is logged in
     })
-    return NextResponse.redirect(`https://github.com/login/oauth/authorize?${params}`)
+    const redirectResponse = NextResponse.redirect(`https://github.com/login/oauth/authorize?${params}`);
+redirectResponse.headers.set('Cache-Control', 'no-store');
+return redirectResponse;
 }

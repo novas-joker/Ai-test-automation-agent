@@ -1,11 +1,13 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import { TestCase } from './UserRepoList'
 import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
 import { Play, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
-import TestCaseSettingDialog from './TestCaseSettingDialog';
-import TestExecutionModal from './TestCaseExecutionModal';
+// Lazy load TestCaseSettingDialog
+import dynamic from 'next/dynamic';
+const TestCaseSettingDialog = dynamic(() => import('./TestCaseSettingDialog'), { ssr: false });
+const TestExecutionModal = dynamic(() => import('./TestCaseExecutionModal'), { ssr: false });
 import { cn } from '@/lib/utils';
 
 type Props = {
