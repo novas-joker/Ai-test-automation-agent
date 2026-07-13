@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import crypto from "crypto"
 import { auth } from "@clerk/nextjs/server"
+import { resolveGithubRedirectUri } from "@/lib/githubRedirect"
 
 export async function GET(req: Request) {
     const { userId } = await auth();
@@ -20,9 +21,11 @@ export async function GET(req: Request) {
         sameSite: "lax",
     });
 
+    const redirectUri = resolveGithubRedirectUri(req.url, process.env.GITHUB_REDIRECT_URI);
+
     const params = new URLSearchParams({
         client_id: process.env.GITHUB_CLIENT_ID!,
-        redirect_uri: process.env.GITHUB_REDIRECT_URI!,
+        redirect_uri: redirectUri,
         scope: "repo read:user",
         state: state,
         prompt: "select_account", // Force GitHub to show account picker even if user is logged in

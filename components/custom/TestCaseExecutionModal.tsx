@@ -104,6 +104,11 @@ export default function TestExecutionModal({ isOpen, onClose, testCases, reposit
         if (!isExecuting || currentIdx < 0 || currentIdx >= testCases.length) {
             if (currentIdx >= testCases.length) {
                 setIsExecuting(false);
+                // Automatically close the dialog after a slight delay so the user can briefly see the final result
+                const timer = setTimeout(() => {
+                    onClose();
+                }, 1500);
+                return () => clearTimeout(timer);
             }
             return;
         }
@@ -196,11 +201,18 @@ export default function TestExecutionModal({ isOpen, onClose, testCases, reposit
         runTest();
     }, [isExecuting, currentIdx, testCases, baseUrl, executionMode]);
 
+    // Trigger auto-start only once when modal opens
+    const autoStartedRef = useRef(false);
     useEffect(() => {
-        if (isOpen && autoStart && testCases.length > 0 && !isExecuting) {
-            startExecution();
+        if (isOpen) {
+            if (autoStart && testCases.length > 0 && !isExecuting && !autoStartedRef.current) {
+                autoStartedRef.current = true;
+                startExecution();
+            }
+        } else {
+            autoStartedRef.current = false;
         }
-    }, [isOpen, autoStart, testCases.length, isExecuting]);
+    }, [isOpen, autoStart, testCases.length]);
 
     const startExecution = () => {
         // Reset all statuses
