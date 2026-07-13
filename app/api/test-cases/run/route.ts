@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 import { db } from "@/db";
 import { TestCasesTable, Repositories } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -7,14 +6,7 @@ import { cookies } from "next/headers";
 import { Browserbase } from "@browserbasehq/sdk";
 import { chromium } from "playwright-core";
 import { auth } from "@clerk/nextjs/server";
-
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY!,
-});
-
-const bb = new Browserbase({
-  apiKey: process.env.BROWSERBASE_API_KEY!,
-});
+import { GoogleGenAI } from "@google/genai";
 
 async function readGithubFile({
   owner,
@@ -59,6 +51,30 @@ async function readGithubFile({
 
 export async function POST(req: NextRequest) {
   try {
+    const geminiApiKey = process.env.GEMINI_API_KEY?.trim();
+    const browserbaseApiKey = process.env.BROWSERBASE_API_KEY?.trim();
+    const browserbaseProjectId = process.env.BROWSERBASE_PROJECT_ID?.trim();
+
+    if (!geminiApiKey) {
+      return NextResponse.json(
+        { error: "Missing GEMINI_API_KEY in server environment." },
+        { status: 500 }
+      );
+    }
+
+    if (!browserbaseApiKey || !browserbaseProjectId) {
+      return NextResponse.json(
+        {
+          error: "Missing BROWSERBASE_API_KEY or BROWSERBASE_PROJECT_ID in server environment.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const modelName = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+    const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+    const bb = new Browserbase({ apiKey: browserbaseApiKey });
+
     const { userId: authUserId } = await auth();
 
     if (!authUserId) {
@@ -205,12 +221,18 @@ export async function POST(req: NextRequest) {
         "Just return the executable code."
       ].join("\n");
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.1-flash-lite",
+      const geminiResponse = await ai.models.generateContent({
+        model: modelName,
         contents: promptText,
+        config: {
+          temperature: 0.2,
+          responseMimeType: "text/plain",
+        },
       });
 
-      let generatedCode = response.text || "";
+      const generatedText = typeof geminiResponse?.text === "string" ? geminiResponse.text : "";
+
+      let generatedCode = generatedText || "";
       generatedCode = generatedCode.replace(/^```javascript\s*/i, "");
       generatedCode = generatedCode.replace(/^```js\s*/i, "");
       generatedCode = generatedCode.replace(/```$/, "");
@@ -267,7 +289,7 @@ export async function POST(req: NextRequest) {
 
     try {
       const sessionResponse = await bb.sessions.create({
-        projectId: process.env.BROWSERBASE_PROJECT_ID,
+        projectId: browserbaseProjectId,
       });
 
       session = sessionResponse;

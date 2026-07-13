@@ -81,6 +81,8 @@ function UserRepoList({repoList,setReload}:props) {
             console.log(result.data);
             await getTestCases(repoId);
         } catch (error: any) {
+            const message = error?.response?.data?.error || error?.message || 'Failed to generate test cases.';
+            setErrorMessage(message);
             if (error.response?.data) {
                 console.error('Generate test cases API error:', error.response.data);
             } else {
