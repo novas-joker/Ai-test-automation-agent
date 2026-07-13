@@ -250,6 +250,7 @@ export async function POST(req: NextRequest) {
 
     let session: any = null;
     let browser: any = null;
+    let page: any = null;
 
     const abortHandler = async () => {
       console.warn("Client aborted request, closing CDP connection");
@@ -273,9 +274,15 @@ export async function POST(req: NextRequest) {
       logs.push(`[SYSTEM] Browserbase session created successfully with ID: ${session.id}`);
 
       const connectUrl = session.connectUrl;
+      if (!connectUrl) {
+        throw new Error("Browserbase session did not return a connectUrl");
+      }
+
+      logs.push(`[SYSTEM] Browserbase connect URL received. Connecting the remote Playwright page through the cloud session.`);
+
       browser = await chromium.connectOverCDP(connectUrl);
       const context = browser.contexts()[0];
-      const page = context.pages()[0];
+      page = context.pages()[0];
 
       page.on("console", (msg: any) => {
         logs.push(`[BROWSER] [${msg.type().toUpperCase()}] ${msg.text()}`);
