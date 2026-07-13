@@ -3,64 +3,11 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { db } from "@/db";
 import { TestCasesTable } from "@/db/schema";
 import { cookies } from "next/headers";
+import { isUsefulFile } from "@/lib/repoContext";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
 });
-
-const ALLOWED_EXTENSIONS = [
-  ".js",
-  ".jsx",
-  ".ts",
-  ".tsx",
-  ".json",
-  ".md",
-];
-
-const IMPORTANT_FILES = [
-  "package.json",
-  "next.config",
-  "middleware",
-  "app/",
-  "pages/",
-  "components/",
-  "src/",
-  "lib/",
-  "utils/",
-  "actions/",
-  "api/",
-  "server/",
-];
-
-const IGNORE_PATHS = [
-  "node_modules",
-  ".next",
-  "dist",
-  "build",
-  ".git",
-  "coverage",
-  "public/",
-  "package-lock.json",
-  "yarn.lock",
-  "pnpm-lock.yaml",
-  ".png",
-  ".jpg",
-  ".jpeg",
-  ".svg",
-  ".webp",
-  ".mp4",
-  ".mov",
-];
-
-function isUsefulFile(path: string) {
-  const isIgnored = IGNORE_PATHS.some((item) => path.includes(item));
-
-  const isAllowedExtension = ALLOWED_EXTENSIONS.some((ext) =>
-    path.endsWith(ext)
-  );
-
-  return !isIgnored && isAllowedExtension;
-}
 
 async function getRepoTree({
   owner,
