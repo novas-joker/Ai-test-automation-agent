@@ -2,7 +2,6 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import crypto from "crypto"
 import { auth } from "@clerk/nextjs/server"
-import { resolveGithubRedirectUri } from "@/lib/githubRedirect"
 
 export async function GET(req: Request) {
     const { userId } = await auth();
@@ -21,7 +20,8 @@ export async function GET(req: Request) {
         sameSite: "lax",
     });
 
-    const redirectUri = resolveGithubRedirectUri(req.url, process.env.GITHUB_REDIRECT_URI);
+    const requestUrl = new URL(req.url);
+    const redirectUri = `${requestUrl.origin}/api/github/callback`;
 
     const params = new URLSearchParams({
         client_id: process.env.GITHUB_CLIENT_ID!,
